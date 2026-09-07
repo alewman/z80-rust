@@ -107,6 +107,12 @@ Two things this port turned up are proposed upstream in
 manifests in `conformance/interrupts/` are shipped as
 `examples/conformance/interrupts/` with their reference traces.
 
+## Where the brief is
+
+[docs/handoff-brief.md](docs/handoff-brief.md) is the prompt this
+repository was built from, verbatim, and [docs/build-record.md](docs/build-record.md)
+is what happened when it was run.
+
 ## Speed
 
 A plain `step()` loop over ZEXALL with the `cpm-minimal` traps (no trace
