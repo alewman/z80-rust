@@ -19,7 +19,7 @@ Pinned oracles, as `docs/conformance.md` in z80-python requires:
 
 | What | Version |
 | --- | --- |
-| z80-python (reference core and conformance kit) | 0.4.0.dev0 at commit `530cad3` |
+| z80-python (reference core and conformance kit) | 0.4.0.dev0 at commit `cab1598` (rungs 1, 2, 4, 5); rung 3 was run at `530cad3` and is being re-run at `cab1598`, see below |
 | Trace schema | version 1 |
 | SingleStepTests/z80 corpus | revision `ebe1875d48f374bcfd4b505d8eb8ee751568b5f7` |
 | raxoft/z80test | release 1.2a |
@@ -30,11 +30,11 @@ Ladder status at this commit, each rung reproduced with the script named
 
 | Rung | What | Result | Script |
 | --- | --- | --- | --- |
-| 1 | Both example manifests diff clean against the reference | `flags-and-branches: traces are identical`, `interrupts: traces are identical` | `rung1.sh` |
+| 1 | All three example manifests diff clean against the reference | `flags-and-branches`, `interrupts`, `prefix-sequences`: `traces are identical` | `rung1.sh` |
 | 2 | SingleStepTests, 1,604 files: registers, RAM, port order, T-states | `TOTAL: 1604000 passed, 0 failed, 0 not implemented / 1604000 cases` | `rung2.sh` |
 | 3 | ZEXALL diffed in lockstep against the reference (`cpm-minimal`), 116 segments of 50,000,000 records | `zexall: every segment identical` and `zexdoc: every segment identical`: 5,764,169,474 records and 46,734,975,782 T-states each, stopped on `cpm_exit`; 6 h 55 min and 7 h 11 min wall with 30 PyPy processes | `rung3.sh` |
 | 4 | z80test natively: `z80full`, `z80ccf`, `z80memptr` | all three `Result: all tests passed.` | `rung4.sh` |
-| 5 | The ten interrupt scenarios of `validation/interrupt_crosscheck.py` as manifests with events | all ten `traces are identical` | `rung5.sh` |
+| 5 | The ten interrupt scenarios of `validation/interrupt_crosscheck.py` as manifests with events (now shipped upstream in `examples/conformance/interrupts/`) | all ten `traces are identical` | `rung5.sh` |
 
 CI (`.github/workflows/ci.yml`) reproduces rungs 1 and 2 on every push, plus
 `cargo fmt --check`, `cargo clippy -D warnings`, and `cargo test` (which
@@ -44,7 +44,7 @@ without needing Python).
 ### Reproducing
 
 ```text
-scripts/fetch_z80python.sh           # z80-python at 530cad3 into external/, with a venv
+scripts/fetch_z80python.sh           # z80-python at cab1598 into external/, with a venv
 scripts/fetch_test_vectors.sh        # SingleStepTests/z80 at the pinned revision into external/
 scripts/rung1.sh
 scripts/rung2.sh
@@ -99,13 +99,29 @@ Binaries:
 - `z80-vectors <dir>`: the SingleStepTests runner.
 - `z80-z80test <tap>...`: the z80test runner.
 
+## Prefix runs
+
+At `cab1598` the reference gained hardware-faithful handling of runs of
+DD/FD prefixes and of DD/FD before ED ([z80-python#5](https://github.com/alewman/z80-python/pull/5):
+each stray prefix is a 4-T-state M1 that bumps R, the last one decides IX or
+IY, an ED after a prefix runs the ED instruction unchanged, and no interrupt
+is accepted inside the run). `src/index_dispatch.rs` transcribes it, and the
+bytes an instruction occupies are now unbounded, since the run is. The rule
+is documentation-derived (Sean Young, *The Undocumented Z80 Documented*
+v0.91, sections 3.7 and 6.1, chapter 5) and has no hardware-captured vector;
+z80-python's `docs/validation.md` states that tier, and this port inherits
+it. `Fault::UnhandledIndexOpcode` is now unreachable and kept only as the
+table's completeness guard.
+
 ## Notes for the reference
 
-Two things this port turned up are proposed upstream in
-[z80-python#3](https://github.com/alewman/z80-python/pull/3): `CPUState` has
-28 fields where three places in the docs say 29, and the interrupt-scenario
-manifests in `conformance/interrupts/` are shipped as
-`examples/conformance/interrupts/` with their reference traces.
+Three things this port turned up went upstream and are merged:
+[z80-python#3](https://github.com/alewman/z80-python/pull/3) (`CPUState` has
+28 fields where the docs said 29, and the interrupt-scenario manifests in
+`conformance/interrupts/` shipped as `examples/conformance/interrupts/` with
+their reference traces), [#4](https://github.com/alewman/z80-python/pull/4)
+(the reference's CI workflow had failed to parse since before this work), and
+[#5](https://github.com/alewman/z80-python/pull/5) (prefix runs, above).
 
 ## Where the brief is
 

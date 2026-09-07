@@ -6,11 +6,47 @@
 //! modify therefore run their ordinary handler and add that 4 here; the
 //! handlers that take a `prefix` argument already include the prefix cost in
 //! their documented totals.
+//!
+//! A DD or FD is not an instruction but a flag saying "use IX (or IY) instead
+//! of HL" for the opcode that follows. That is why a run of them is legal:
+//! each one is a stray M1 that costs 4 T-states and bumps R, the last one
+//! decides the register, and an ED after any of them starts an ED instruction
+//! that the flag cannot touch. Sean Young, *The Undocumented Z80 Documented*
+//! v0.91, sections 3.7 and 6.1; FUSE's `ddfd00` test case encodes the same
+//! costs.
 
 use crate::core::{Bus, Fault, Z80};
 
 impl<B: Bus> Z80<B> {
     pub(crate) fn execute_index(&mut self, prefix: u8, sub_opcode: u8) -> Result<u32, Fault> {
+        let mut prefix = prefix;
+        let mut sub_opcode = sub_opcode;
+        let mut stray_t_states = 0;
+        while matches!(sub_opcode, 0xDD | 0xFD) {
+            // A DD or FD before another DD or FD is a stray prefix: its own M1
+            // (4 T-states, R+1, already counted by fetch_byte) and nothing else.
+            // "In a large sequence of DD and FD bytes, it is the last one that
+            // counts" (Young 3.7). No interrupt is accepted inside the run,
+            // because the run is one instruction to step() (Young, chapter 5).
+            prefix = sub_opcode;
+            sub_opcode = self.fetch_byte();
+            stray_t_states += 4;
+        }
+        if sub_opcode == 0xED {
+            // "If CB or ED is encountered, that byte plus the next make up an
+            // instruction" (Young 3.7), and ED instructions never use the IX/IY
+            // substitution (Young 3.2), so the DD/FD is a 4-T-state stray.
+            let ed_opcode = self.fetch_byte();
+            return Ok(stray_t_states + 4 + self.execute_ed(ed_opcode));
+        }
+        Ok(stray_t_states + self.execute_index_opcode(prefix, sub_opcode)?)
+    }
+
+    pub(crate) fn execute_index_opcode(
+        &mut self,
+        prefix: u8,
+        sub_opcode: u8,
+    ) -> Result<u32, Fault> {
         if sub_opcode == 0xCB {
             let displacement = self.read_operand_byte();
             // The final DDCB opcode byte is read as an operand, not an M1 fetch, so R
@@ -317,14 +353,12 @@ impl<B: Bus> Z80<B> {
             return Ok(self.op_push_rr(sub_opcode) + 4);
         }
 
-        // DD/FD followed by DD, FD, or ED: the reference rewinds PC to the byte
-        // after the prefix and raises. Nothing else about the state is touched.
-        let prefix_addr = self.pc.wrapping_sub(2);
-        self.pc = prefix_addr.wrapping_add(1);
+        // Every byte after a DD/FD is handled above or by execute_index (DD,
+        // FD, ED); this guard only documents that the table is complete.
         Err(Fault::UnhandledIndexOpcode {
             prefix,
             opcode: sub_opcode,
-            pc: prefix_addr,
+            pc: self.pc.wrapping_sub(2),
         })
     }
 }
