@@ -101,10 +101,19 @@ Binaries:
 
 ## Notes for the reference
 
-- `CPUState` has 28 fields; `docs/conformance.md`, `docs/trace-schema.md`,
-  and the README of z80-python say 29 in three places.
-- The interrupt-scenario manifests in `conformance/interrupts/` are
-  candidates for shipping in z80-python's `examples/conformance/`.
+Two things this port turned up are proposed upstream in
+[z80-python#3](https://github.com/alewman/z80-python/pull/3): `CPUState` has
+28 fields where three places in the docs say 29, and the interrupt-scenario
+manifests in `conformance/interrupts/` are shipped as
+`examples/conformance/interrupts/` with their reference traces.
+
+## Speed
+
+A plain `step()` loop over ZEXALL with the `cpm-minimal` traps (no trace
+records, no state capture) runs the 5,764,169,474 instructions in 116 s on
+one core of an i9-13900K: about 50 million instructions per second, or a
+400 MHz Z80. `z80-trace --no-trace`, which also captures the state before
+and after every boundary, takes 151 s.
 
 ## License
 
