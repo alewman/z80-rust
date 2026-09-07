@@ -74,6 +74,14 @@ from the commit log and the run logs.
   vector, because a prefix run has no length bound and the trace reader
   rejected a five-byte `DD DD 21 34 12` cut to four.
 
+## 2026-09-07, third piece: FUSE
+
+- FUSE 1.6.0's Z80 core test set (1,356 emulator-derived cases) was run
+  against the reference first: 1,350 agree, and each of the six that do not
+  is explained by a hardware-derived source the reference follows
+  (z80-python#6). The same runner transcribed here is rung 6; it requires
+  exactly those six to diverge. CI now runs rungs 1, 2, 5, and 6.
+
 ## What was not needed
 
 No divergence from the reference was found at any rung, so neither core

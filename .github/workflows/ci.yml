@@ -33,6 +33,8 @@ jobs:
           python-version: "3.12"
       - run: scripts/fetch_z80python.sh external/z80-python
       - run: scripts/rung1.sh external/z80-python
+      - name: "rung 5: interrupt manifests"
+        run: scripts/rung5.sh external/z80-python/.venv/bin/python
 
   rung2:
     name: "rung 2: SingleStepTests 1,604,000 cases"
@@ -47,3 +49,12 @@ jobs:
           key: singlesteptests-z80-${{ env.VECTORS_REVISION }}
       - run: scripts/fetch_test_vectors.sh external/z80_test_vectors
       - run: scripts/rung2.sh external/z80_test_vectors/v1
+
+  rung6:
+    name: "rung 6: FUSE core tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: scripts/fetch_fuse_tests.sh external/fuse_tests
+      - run: scripts/rung6.sh external/fuse_tests
