@@ -262,23 +262,22 @@ impl<B: Bus> Z80<B> {
         self.iff2 = false;
         self.inc_r();
         self.push_word(self.pc);
-        let t_states;
-        if self.im == 0 {
+        let t_states = if self.im == 0 {
             self.wz = u16::from(vector_byte & 0x38);
             self.pc = self.wz;
-            t_states = 13;
+            13
         } else if self.im == 1 {
             self.wz = 0x0038;
             self.pc = self.wz;
-            t_states = 13;
+            13
         } else {
             let vector_address = (u16::from(self.i) << 8) | u16::from(vector_byte);
             let low = self.bus.read_byte(vector_address);
             let high = self.bus.read_byte(vector_address.wrapping_add(1));
             self.wz = (u16::from(high) << 8) | u16::from(low);
             self.pc = self.wz;
-            t_states = 19;
-        }
+            19
+        };
         self.update_q(false);
         Ok(t_states)
     }
