@@ -23,6 +23,7 @@ Pinned oracles, as `docs/conformance.md` in z80-python requires:
 | Trace schema | version 1 |
 | SingleStepTests/z80 corpus | revision `ebe1875d48f374bcfd4b505d8eb8ee751568b5f7` |
 | raxoft/z80test | release 1.2a |
+| FUSE Z80 core tests | release 1.6.0 (`fuse-1.6.0.tar.gz`, SHA-256 `3a8fedf2…047096`) |
 
 Ladder status at this commit, each rung reproduced with the script named
 (`scripts/`) on Linux x86_64 with rustc 1.93.1, CPython 3.14.4 and PyPy
@@ -35,8 +36,9 @@ Ladder status at this commit, each rung reproduced with the script named
 | 3 | ZEXALL diffed in lockstep against the reference (`cpm-minimal`), 116 segments of 50,000,000 records | `zexall: every segment identical` and `zexdoc: every segment identical`: 5,764,169,474 records and 46,734,975,782 T-states each, stopped on `cpm_exit`; 6 h 55 min and 7 h 11 min wall with 30 PyPy processes | `rung3.sh` |
 | 4 | z80test natively: `z80full`, `z80ccf`, `z80memptr` | all three `Result: all tests passed.` | `rung4.sh` |
 | 5 | The ten interrupt scenarios of `validation/interrupt_crosscheck.py` as manifests with events (now shipped upstream in `examples/conformance/interrupts/`) | all ten `traces are identical` | `rung5.sh` |
+| 6 | FUSE 1.6.0's Z80 core test set, 1,356 emulator-derived cases, with the six divergences z80-python explains pinned as strict expected failures | `1350 agree, 6 expected divergences, 0 unexpected` | `rung6.sh` |
 
-CI (`.github/workflows/ci.yml`) reproduces rungs 1 and 2 on every push, plus
+CI (`.github/workflows/ci.yml`) reproduces rungs 1, 2, 5, and 6 on every push, plus
 `cargo fmt --check`, `cargo clippy -D warnings`, and `cargo test` (which
 replays the two example manifests against copies of the reference traces
 without needing Python).
@@ -53,6 +55,8 @@ JOBS=30 scripts/rung3.sh zexall path/to/pypy3
 JOBS=30 scripts/rung3.sh zexdoc path/to/pypy3
 scripts/rung4.sh path/to/z80test-1.2a   # directory holding the .tap files
 scripts/rung5.sh
+scripts/fetch_fuse_tests.sh            # FUSE 1.6.0 z80/tests into external/
+scripts/rung6.sh
 ```
 
 Rung 3 runs the reference at a few tens of thousands of records per second
@@ -98,6 +102,10 @@ Binaries:
   (`docs/trace-schema.md`) to stdout or `--out`.
 - `z80-vectors <dir>`: the SingleStepTests runner.
 - `z80-z80test <tap>...`: the z80test runner.
+- `z80-fuse <dir>`: the FUSE core-test runner (rung 6). FUSE's expectations
+  are emulator-derived; six cases disagree with the hardware-derived
+  oracles, for reasons z80-python's `docs/validation.md` records, and the
+  runner requires exactly those six to diverge.
 
 ## Prefix runs
 
