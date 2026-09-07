@@ -23,8 +23,9 @@ pub trait Bus {
 /// returns the error, so a run that hits one ends where the reference's would.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Fault {
-    /// A DD/FD prefix followed by a byte the index dispatcher does not handle
-    /// (DD/FD/ED). PC has been rewound to the byte after the prefix.
+    /// A DD/FD prefix followed by a byte the index dispatch table does not
+    /// handle. Unreachable in practice: runs of DD/FD and DD/FD before ED are
+    /// consumed before the table, and the table covers every other byte.
     UnhandledIndexOpcode { prefix: u8, opcode: u8, pc: u16 },
     /// An unprefixed opcode the main dispatcher does not handle. Unreachable
     /// in practice: every one of the 256 is handled.
@@ -92,9 +93,10 @@ pub struct Z80<B: Bus> {
     pub(crate) non_maskable_interrupt_pending: bool,
     /// Not processor state: the bytes the current instruction has consumed
     /// from PC (opcode, prefixes, operands), so a trace can report exactly
-    /// the bytes the instruction occupied without a disassembler.
-    pub(crate) fetched: [u8; 4],
-    pub(crate) fetched_len: usize,
+    /// the bytes the instruction occupied without a disassembler. A run of
+    /// DD/FD prefixes has no length bound, so this is a vector; it is
+    /// cleared, not reallocated, per instruction.
+    pub(crate) fetched: Vec<u8>,
 }
 
 impl<B: Bus> Z80<B> {
@@ -131,21 +133,17 @@ impl<B: Bus> Z80<B> {
             reset_pending: false,
             pending_maskable_interrupt: None,
             non_maskable_interrupt_pending: false,
-            fetched: [0; 4],
-            fetched_len: 0,
+            fetched: Vec::with_capacity(8),
         }
     }
 
     /// The bytes the most recent instruction occupied, in address order.
     pub fn last_instruction_bytes(&self) -> &[u8] {
-        &self.fetched[..self.fetched_len]
+        &self.fetched
     }
 
     pub(crate) fn note_fetched(&mut self, value: u8) {
-        if self.fetched_len < self.fetched.len() {
-            self.fetched[self.fetched_len] = value;
-            self.fetched_len += 1;
-        }
+        self.fetched.push(value);
     }
 
     pub(crate) fn inc_r(&mut self) {

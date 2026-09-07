@@ -59,6 +59,21 @@ from the commit log and the run logs.
 - **Speed.** A plain `step()` loop runs ZEXALL in 116 s, about 50 million
   instructions per second.
 
+## 2026-09-07, second piece: prefix runs
+
+- The user asked which gaps remained. Two were real behavior: runs of
+  DD/FD prefixes (and DD/FD before ED), which both cores refused, and IM 0
+  with a non-RST byte. The first was closed in the reference
+  (z80-python#5, merged as `cab1598`) from Sean Young's *The Undocumented
+  Z80 Documented* v0.91 with the evidence tier stated, then transcribed
+  here. Rungs 1 (now three manifests), 2, 4, and 5 re-run clean at
+  `cab1598`; the ZEX lockstep re-run at `cab1598` is recorded in the README
+  when it finishes. The second gap changes the trace schema and waits for a
+  decision.
+- One transcription detail: the bytes an instruction occupies became a
+  vector, because a prefix run has no length bound and the trace reader
+  rejected a five-byte `DD DD 21 34 12` cut to four.
+
 ## What was not needed
 
 No divergence from the reference was found at any rung, so neither core

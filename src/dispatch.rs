@@ -11,7 +11,7 @@ impl<B: Bus> Z80<B> {
     /// This is the instruction-only entry point; [`Z80::step`] is the host
     /// entry point that services lifecycle requests first.
     pub fn decode_and_execute(&mut self) -> Result<u32, Fault> {
-        self.fetched_len = 0;
+        self.fetched.clear();
         let opcode = self.fetch_byte();
         if opcode == 0xCB {
             let sub_opcode = self.fetch_byte();

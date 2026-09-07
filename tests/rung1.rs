@@ -1,4 +1,4 @@
-//! Rung 1, self-contained: the two example manifests from z80-python produce
+//! Rung 1, self-contained: the example manifests from z80-python produce
 //! records equal to the committed reference traces.
 //!
 //! The authoritative check is `python -m z80_python.conformance diff`, which
@@ -47,4 +47,9 @@ fn flags_and_branches_matches_reference() {
 #[test]
 fn interrupts_matches_reference() {
     check("interrupts", StopReason::Halted);
+}
+
+#[test]
+fn prefix_sequences_matches_reference() {
+    check("prefix-sequences", StopReason::Halted);
 }
