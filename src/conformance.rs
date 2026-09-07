@@ -224,9 +224,24 @@ fn apply_event(cpu: &mut Z80<ConformanceHost>, event: Event) {
 ///
 /// The stop-check order each boundary is the reference's: pending events,
 /// cpm traps, `at_pc`, `on_halt`, then the step budget.
-pub fn trace_manifest<F>(manifest: &Manifest, mut sink: F) -> Result<TraceRun, RunError>
+pub fn trace_manifest<F>(manifest: &Manifest, sink: F) -> Result<TraceRun, RunError>
 where
     F: FnMut(&StepRecord) -> io::Result<()>,
+{
+    trace_manifest_with(manifest, sink, |_, _| Ok(()))
+}
+
+/// [`trace_manifest`] with a hook called before every boundary that will be
+/// recorded, after the stop checks have passed, with the record index and
+/// the machine. Used to write checkpoints.
+pub fn trace_manifest_with<F, G>(
+    manifest: &Manifest,
+    mut sink: F,
+    mut before_step: G,
+) -> Result<TraceRun, RunError>
+where
+    F: FnMut(&StepRecord) -> io::Result<()>,
+    G: FnMut(u64, &Z80<ConformanceHost>) -> io::Result<()>,
 {
     let mut cpu = Z80::new(ConformanceHost::new(manifest));
     cpu.restore_state(&manifest.initial);
@@ -257,6 +272,7 @@ where
             reason = StopReason::Halted;
             break;
         }
+        before_step(steps, &cpu)?;
         match step_record(&mut cpu, steps) {
             Ok(record) => {
                 sink(&record)?;
@@ -623,4 +639,61 @@ pub fn load_manifest(path: &Path) -> Result<Manifest, String> {
     let value: Value = serde_json::from_str(&text)
         .map_err(|error| format!("{}: not valid JSON: {error}", path.display()))?;
     manifest_from_json(&value, path.parent())
+}
+
+// --- checkpoints ---------------------------------------------------------------
+
+/// Write a manifest that resumes this run from the machine's current state.
+///
+/// The checkpoint carries the full 64 KiB as a `file` segment beside the
+/// manifest, every `CpuState` field as `initial`, and `max_steps` of
+/// `segment_steps`, so running the checkpoints of a long trace in parallel
+/// and diffing each one against the reference proves the same thing the
+/// single lockstep run proves: each segment starts from the state the
+/// previous segment ended in, so a divergence anywhere is reported by the
+/// segment that contains it. Manifests with `events` are refused, because
+/// their `at_step` values would have to be shifted.
+pub fn write_checkpoint(
+    manifest: &Manifest,
+    cpu: &Z80<ConformanceHost>,
+    at_step: u64,
+    segment_steps: u64,
+    dir: &Path,
+) -> io::Result<PathBuf> {
+    if !manifest.events.is_empty() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "checkpoints are not supported for manifests with events",
+        ));
+    }
+    let stem = format!("{}-{:012}", manifest.name, at_step);
+    let memory_name = format!("{stem}.mem");
+    std::fs::write(dir.join(&memory_name), &cpu.bus.memory[..])?;
+    let state = cpu.capture_state();
+    let mut initial = String::new();
+    state.write_json(&mut initial);
+    let initial: Value = serde_json::from_str(&initial).expect("state JSON is valid");
+    let document = serde_json::json!({
+        "version": MANIFEST_SCHEMA_VERSION,
+        "name": stem,
+        "host": match manifest.host {
+            HostProfile::Flat => "flat",
+            HostProfile::CpmMinimal => "cpm-minimal",
+        },
+        "port_read_value": manifest.port_read_value,
+        "memory": [{"address": 0, "file": memory_name}],
+        "initial": initial,
+        "events": [],
+        "stop": {
+            "max_steps": segment_steps,
+            "on_halt": manifest.stop.on_halt,
+            "at_pc": manifest.stop.at_pc,
+        },
+    });
+    let path = dir.join(format!("{stem}.json"));
+    std::fs::write(
+        &path,
+        format!("{}\n", serde_json::to_string_pretty(&document)?),
+    )?;
+    Ok(path)
 }
