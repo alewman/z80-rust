@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+  VECTORS_REVISION: ebe1875d48f374bcfd4b505d8eb8ee751568b5f7
+  Z80_PYTHON_COMMIT: "530cad3"
+
+jobs:
+  build:
+    name: fmt, clippy, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --check
+      - run: cargo clippy --release --all-targets -- -D warnings
+      - run: cargo test --release
+
+  rung1:
+    name: "rung 1: example manifests diff clean"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: scripts/fetch_z80python.sh external/z80-python
+      - run: scripts/rung1.sh external/z80-python
+
+  rung2:
+    name: "rung 2: SingleStepTests 1,604,000 cases"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache the pinned SingleStepTests corpus
+        uses: actions/cache@v4
+        with:
+          path: external/z80_test_vectors
+          key: singlesteptests-z80-${{ env.VECTORS_REVISION }}
+      - run: scripts/fetch_test_vectors.sh external/z80_test_vectors
+      - run: scripts/rung2.sh external/z80_test_vectors/v1
