@@ -32,7 +32,7 @@ Ladder status at this commit, each rung reproduced with the script named
 | --- | --- | --- | --- |
 | 1 | Both example manifests diff clean against the reference | `flags-and-branches: traces are identical`, `interrupts: traces are identical` | `rung1.sh` |
 | 2 | SingleStepTests, 1,604 files: registers, RAM, port order, T-states | `TOTAL: 1604000 passed, 0 failed, 0 not implemented / 1604000 cases` | `rung2.sh` |
-| 3 | ZEXALL diffed in lockstep against the reference (`cpm-minimal`), 116 segments of 50,000,000 records | `zexall: every segment identical`: 5,764,169,474 records, 46,734,975,782 T-states, stopped on `cpm_exit`; 6 h 55 min wall with 30 PyPy processes. ZEXDOC: not yet run at this commit | `rung3.sh` |
+| 3 | ZEXALL diffed in lockstep against the reference (`cpm-minimal`), 116 segments of 50,000,000 records | `zexall: every segment identical` and `zexdoc: every segment identical`: 5,764,169,474 records and 46,734,975,782 T-states each, stopped on `cpm_exit`; 6 h 55 min and 7 h 11 min wall with 30 PyPy processes | `rung3.sh` |
 | 4 | z80test natively: `z80full`, `z80ccf`, `z80memptr` | all three `Result: all tests passed.` | `rung4.sh` |
 | 5 | The ten interrupt scenarios of `validation/interrupt_crosscheck.py` as manifests with events | all ten `traces are identical` | `rung5.sh` |
 
