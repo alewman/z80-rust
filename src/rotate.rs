@@ -1,6 +1,8 @@
 //! Rotate, shift, and bit-operation implementation.
 //!
-//! Transcribed from `z80_python/_rotate.py`.
+//! Transcribed from `z80_python/_rotate.py`. The rotates keep the reference's
+//! shift-and-or form rather than `rotate_left`, so the two read the same.
+#![allow(clippy::manual_rotate)]
 
 use crate::core::{Bus, Z80};
 

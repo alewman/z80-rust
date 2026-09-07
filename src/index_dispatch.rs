@@ -167,7 +167,7 @@ impl<B: Bus> Z80<B> {
         }
 
         // plain_alu: every 8-bit ALU form whose operand is not H, L, or (HL).
-        if (0x80..=0xBF).contains(&sub_opcode) && !matches!(sub_opcode & 0x07, 4 | 5 | 6) {
+        if (0x80..=0xBF).contains(&sub_opcode) && !matches!(sub_opcode & 0x07, 4..=6) {
             return Ok(self.op_alu_r(sub_opcode) + 4);
         }
         // indexed_register_alu: the same forms with IXH/IXL (IYH/IYL) operands.
