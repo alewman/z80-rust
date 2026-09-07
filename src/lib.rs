@@ -4,9 +4,12 @@
 //! side: `flags`, `state`, `core`, `alu`, `blocks`, `control`, `dispatch`,
 //! `index`, `index_dispatch`, `io`, `loads`, `rotate`, and `cpu` correspond
 //! one-to-one with `z80_python/_flags.py`, `state.py`, `_core.py`, and so on.
+//! `trace` and `conformance` implement the trace schema and the conformance
+//! kit (`docs/trace-schema.md` and `docs/conformance.md` in z80-python).
 
 pub mod alu;
 pub mod blocks;
+pub mod conformance;
 pub mod control;
 pub mod core;
 pub mod cpu;
@@ -18,6 +21,7 @@ pub mod io;
 pub mod loads;
 pub mod rotate;
 pub mod state;
+pub mod trace;
 
 pub use crate::core::{Bus, Fault, Z80};
 pub use crate::flags::Flags;
