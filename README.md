@@ -92,9 +92,24 @@ assert_eq!((t_states, cpu.a), (7, 0x2A));
 maskable interrupt before fetching, exactly as the reference's `step()`
 does; `request_*` / `clear_*` are the lifecycle API; `capture_state()` and
 `restore_state()` move the complete processor state. `step()` returns
-`Err(Fault)` in exactly the situations where the reference raises
-`NotImplementedError` (a DD/FD prefix followed by DD, FD, or ED; IM 0 with a
-non-RST vector byte) and leaves the state as the reference leaves it.
+`Err(Fault)` in exactly the situation where the reference raises
+`NotImplementedError` (IM 0 with a non-RST vector byte, below) and leaves
+the state as the reference leaves it.
+
+## Stated limitations
+
+- **IM 0 accepts only the eight RST opcodes.** A real device can put any
+  instruction on the bus in interrupt mode 0, and a multi-byte one is
+  fetched from the bus over further acknowledge cycles. Both cores stop with
+  an error for a non-RST byte and leave the request pending. No oracle in
+  the ladder exercises non-RST IM 0 (SingleStepTests, z80test, ZEX, and FUSE
+  all skip it), and supporting it changes the shape of the pending-request
+  field and therefore the trace schema, so it stays a stated limitation
+  until a target machine needs it. Same as the reference,
+  `docs/interrupt-lifecycle.md`.
+- Bus-level timing, memory contention, WAIT states, interrupt-acknowledge
+  callbacks, and daisy chains are outside both cores' claims, as
+  `docs/conformance.md` in the reference says.
 
 Binaries:
 
