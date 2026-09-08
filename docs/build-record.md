@@ -67,8 +67,9 @@ from the commit log and the run logs.
   (z80-python#5, merged as `cab1598`) from Sean Young's *The Undocumented
   Z80 Documented* v0.91 with the evidence tier stated, then transcribed
   here. Rungs 1 (now three manifests), 2, 4, and 5 re-run clean at
-  `cab1598`; the ZEX lockstep re-run at `cab1598` is recorded in the README
-  when it finishes. The second gap changes the trace schema and waits for a
+  `cab1598`, and the ZEX lockstep re-run at `cab1598` finished on
+  2026-09-08 at 05:52: ZEXALL and ZEXDOC every segment identical, 6 h 58 min
+  and 6 h 43 min. The second gap changes the trace schema and waits for a
   decision.
 - One transcription detail: the bytes an instruction occupies became a
   vector, because a prefix run has no length bound and the trace reader

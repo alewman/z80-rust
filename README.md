@@ -19,7 +19,7 @@ Pinned oracles, as `docs/conformance.md` in z80-python requires:
 
 | What | Version |
 | --- | --- |
-| z80-python (reference core and conformance kit) | 0.4.0.dev0 at commit `cab1598` (rungs 1, 2, 4, 5); rung 3 was run at `530cad3` and is being re-run at `cab1598`, see below |
+| z80-python (reference core and conformance kit) | 0.4.0.dev0 at commit `cab1598` (every rung; rung 3 was also run at `530cad3`) |
 | Trace schema | version 1 |
 | SingleStepTests/z80 corpus | revision `ebe1875d48f374bcfd4b505d8eb8ee751568b5f7` |
 | raxoft/z80test | release 1.2a |
@@ -33,7 +33,7 @@ Ladder status at this commit, each rung reproduced with the script named
 | --- | --- | --- | --- |
 | 1 | All three example manifests diff clean against the reference | `flags-and-branches`, `interrupts`, `prefix-sequences`: `traces are identical` | `rung1.sh` |
 | 2 | SingleStepTests, 1,604 files: registers, RAM, port order, T-states | `TOTAL: 1604000 passed, 0 failed, 0 not implemented / 1604000 cases` | `rung2.sh` |
-| 3 | ZEXALL diffed in lockstep against the reference (`cpm-minimal`), 116 segments of 50,000,000 records | `zexall: every segment identical` and `zexdoc: every segment identical`: 5,764,169,474 records and 46,734,975,782 T-states each, stopped on `cpm_exit`; 6 h 55 min and 7 h 11 min wall with 30 PyPy processes | `rung3.sh` |
+| 3 | ZEXALL and ZEXDOC diffed in lockstep against the reference (`cpm-minimal`), 116 segments of 50,000,000 records each | `zexall: every segment identical` and `zexdoc: every segment identical`: 5,764,169,474 records and 46,734,975,782 T-states each, stopped on `cpm_exit`. At `cab1598`: 6 h 58 min and 6 h 43 min wall with 30 PyPy processes (at `530cad3`: 6 h 55 min and 7 h 11 min) | `rung3.sh` |
 | 4 | z80test natively: `z80full`, `z80ccf`, `z80memptr` | all three `Result: all tests passed.` | `rung4.sh` |
 | 5 | The ten interrupt scenarios of `validation/interrupt_crosscheck.py` as manifests with events (now shipped upstream in `examples/conformance/interrupts/`) | all ten `traces are identical` | `rung5.sh` |
 | 6 | FUSE 1.6.0's Z80 core test set, 1,356 emulator-derived cases, with the six divergences z80-python explains pinned as strict expected failures | `1350 agree, 6 expected divergences, 0 unexpected` | `rung6.sh` |
