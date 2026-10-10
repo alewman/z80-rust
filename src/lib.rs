@@ -6,7 +6,10 @@
 //! one-to-one with `z80_python/_flags.py`, `state.py`, `_core.py`, and so on.
 //! `trace` and `conformance` implement the trace schema and the conformance
 //! kit (`docs/trace-schema.md` and `docs/conformance.md` in z80-python).
+//! `timing` is `z80_python/timing.py`: where in an instruction each bus
+//! access falls, from the reference's table (`access_timing`, generated).
 
+mod access_timing;
 pub mod alu;
 pub mod blocks;
 pub mod conformance;
@@ -21,6 +24,7 @@ pub mod io;
 pub mod loads;
 pub mod rotate;
 pub mod state;
+pub mod timing;
 pub mod trace;
 
 pub use crate::core::{Bus, Fault, Z80};
