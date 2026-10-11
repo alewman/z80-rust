@@ -23,8 +23,16 @@ impl<B: Bus> Z80<B> {
         if self.can_accept_maskable_interrupt() {
             return self.accept_maskable_interrupt();
         }
+        if self.ei_delay > 0 {
+            // The instruction after EI is about to run, so the EI delay ends here,
+            // before it executes rather than after: if that instruction is EI it
+            // re-arms the delay, and if it is DI the delay stays 0. "Directly after
+            // an EI or DI instruction, interrupts aren't accepted" (Young, The
+            // Undocumented Z80 Documented, 5.5, p. 21), so EI; EI; NOP takes a
+            // pending interrupt after the NOP, never between the EIs and the NOP.
+            self.ei_delay = 0;
+        }
 
-        let delay_was_active = self.ei_delay > 0;
         let t_states = if self.halted {
             self.inc_r();
             self.update_q(false);
@@ -32,9 +40,6 @@ impl<B: Bus> Z80<B> {
         } else {
             self.decode_and_execute()?
         };
-        if delay_was_active {
-            self.ei_delay -= 1;
-        }
         Ok(t_states)
     }
 
